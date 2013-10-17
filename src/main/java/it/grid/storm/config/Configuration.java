@@ -26,8 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Singleton holding all configuration values that any other object in the StoRM
@@ -42,20 +40,17 @@ import org.slf4j.LoggerFactory;
 
 public class Configuration {
 
-	private static final Logger log = LoggerFactory.getLogger(Configuration.class);
+	private ConfigReader cr = new ConfigReader();
 	
-	private ConfigReader cr = new ConfigReader(); // set an empty ConfigReader
-	// as default
-	static Configuration instance = new Configuration(); // only
-	// instance of this configuration class
+	private static Configuration instance = new Configuration();
 
 	private static final String MANAGED_SURLS_KEY = "storm.service.SURL.endpoint";
 	private static final String MANAGED_SURL_DEFAULT_PORTS_KEY = "storm.service.SURL.default-ports";
 	private static final String SERVICE_HOSTNAME_KEY = "storm.service.FE-public.hostname";
 	private static final String SERVICE_PORT_KEY = "storm.service.port";
+	private static final int 		SERVICE_PORT_DEFAULT = 8444;
 	private static final String LIST_OF_MACHINE_NAMES_KEY = "storm.service.FE-list.hostnames";
 	private static final String LIST_OF_MACHINE_IPS_KEY = "storm.service.FE-list.IPs";
-	private static final String DB_DRIVER_KEY = "storm.service.request-db.dbms-vendor";
 	private static final String DB_URL_1KEY = "storm.service.request-db.protocol";
 	private static final String DB_URL_2KEY = "storm.service.request-db.host";
 	private static final String DB_URL_3KEY = "storm.service.request-db.db-name";
@@ -85,16 +80,13 @@ public class Configuration {
 	private static final String SRMCLIENT_KEY = "asynch.srmclient";
 	private static final String COMMAND_SERVER_BINDING_PORT_KEY = "storm.commandserver.port";
 	private static final String SERIAL_SCHEDULER_KEY = "scheduler.serial";
-	private static final String BE_PERSISTENCE_DB_VENDOR_KEY = "persistence.internal-db.dbms-vendor";
 	private static final String BE_PERSISTENCE_DBMS_URL_1KEY = "persistence.internal-db.host";
 	private static final String BE_PERSISTENCE_DBMS_URL_2KEY = "" + DB_URL_2KEY;
 	private static final String BE_PERSISTENCE_DB_NAME_KEY = "persistence.internal-db.db-name";
 	private static final String BE_PERSISTENCEDB_USER_NAME_1KEY = "persistence.internal-db.username";
-	private static final String BE_PERSISTENCEDB_USER_NAME_2KEY = ""
-		+ DB_USER_NAME_KEY;
+	private static final String BE_PERSISTENCEDB_USER_NAME_2KEY = "" + DB_USER_NAME_KEY;
 	private static final String BE_PERSISTENCE_DB_PASSWORD_1KEY = "persistence.internal-db.passwd";
-	private static final String BE_PERSISTENCE_DB_PASSWORD_2KEY = ""
-		+ DB_PASSWORD_KEY;
+	private static final String BE_PERSISTENCE_DB_PASSWORD_2KEY = "" + DB_PASSWORD_KEY;
 	private static final String BE_PERSISTENCE_POOL_DB_KEY = "persistence.internal-db.connection-pool";
 	private static final String BE_PERSISTENCE_POOL_DB_MAX_ACTIVE_KEY = "persistence.internal-db.connection-pool.maxActive";
 	private static final String BE_PERSISTENCE_POOL_DB_MAX_WAIT_KEY = "persistence.internal-db.connection-pool.maxWait";
@@ -164,11 +156,10 @@ public class Configuration {
 	private static final String FAST_BOOTSTRAP_ENABLED_KEY = "bootstrap.fast.enabled";
 	private static final String SERVER_POOL_STATUS_CHECK_TIMEOUT_KEY = "server-pool.status-check.timeout";
 	private static final String SANITY_CHECK_ENABLED_KEY = "sanity-check.enabled";
+	private static final String XMLRPC_SECURITY_ENABLED_KEY = "synchcall.xmlrpc.security.enabled";
+	private static final String XMLRPC_SECURITY_TOKEN_KEY = "synchcall.xmlrpc.security.token";
 
-	private Configuration() {
-
-	}
-
+	
 	/**
 	 * Returns the sole instance of the Configuration class.
 	 */
@@ -189,10 +180,8 @@ public class Configuration {
 	}
 
 	/**
-	 * Method that returns the directory holding the configuration file. The
-	 * methods that make use of it are uncertain... must be found soon!!! Beware
-	 * that the configuration directory is implicit in the complete pathname to
-	 * the configuration file supplied in the command line when starting StoRM BE.
+	 * Method that returns the directory holding the configuration file.
+	 * 
 	 */
 	public String configurationDir() {
 
@@ -200,82 +189,85 @@ public class Configuration {
 	}
 
 	/**
-	 * getNamespaceConfigPath
 	 * 
-	 * @return String
+	 * @return
 	 */
 	public String namespaceConfigPath() {
 
-		String storm_home = System.getProperty("user.dir");
-		String configDir = storm_home + File.separator + "etc";
+		String stormHome = System.getProperty("user.dir");
+		String configDir = stormHome + File.separator + "etc";
+		
 		return configDir;
 	}
 
+	
 	/**
-	 * MANDATORY CONFIGURATION PARAMETER! Define the SURL endpoints.
 	 * 
-	 * @return String[]
+	 * @return
 	 */
 	public String[] getManagedSURLs() {
 
 		String[] defaultValue = { "UNDEFINED_SERVICE_ENDPOINT" };
+		
 		if (!cr.getConfiguration().containsKey(MANAGED_SURLS_KEY)) {
+	
 			return defaultValue;
+		
 		} else {
-			// load from external source
+			
 			return cr.getConfiguration().getStringArray(MANAGED_SURLS_KEY);
 		}
+
 	}
 
 	/**
+	 * 
 	 * @return
 	 */
 	public Integer[] getManagedSurlDefaultPorts() {
 
 		Integer[] portsArray;
+		
 		if (!cr.getConfiguration().containsKey(MANAGED_SURL_DEFAULT_PORTS_KEY)) {
+		
 			portsArray = new Integer[] { 8444 };
+		
 		} else {
-			// load from external source
+			
 			String[] portString = cr.getConfiguration().getStringArray(
 				MANAGED_SURL_DEFAULT_PORTS_KEY);
+			
 			ArrayList<Integer> ports = new ArrayList<Integer>();
+			
 			for (String port : portString) {
 				ports.add(Integer.parseInt(port.trim()));
 			}
+		
 			portsArray = ports.toArray(new Integer[0]);
 		}
+		
 		return portsArray;
 	}
 
 	/**
+	 * Return the frontend service host name.
+	 * 
 	 * @return String
 	 */
 	public String getServiceHostname() {
 
-		String defaultValue = "UNDEFINED_STORM_HOSTNAME";
-		if (!cr.getConfiguration().containsKey(SERVICE_HOSTNAME_KEY)) {
-			return defaultValue;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(SERVICE_HOSTNAME_KEY);
-		}
+		return cr.getConfiguration().getString(SERVICE_HOSTNAME_KEY, "UNDEFINED_STORM_HOSTNAME");
 	}
 
 	/**
-	 * Method used by SFN to establish the FE binding port. If no value is found
-	 * in the configuration medium, then the default one is used instead.
-	 * key="storm.service.port"; default value="8444"
+	 * Return the frontend service port. 
+	 * 
+	 * This method is used by SFN to establish the FE binding port.
+	 *
 	 */
 	public int getServicePort() {
 
-		int defaultValue = 8444;
-		if (!cr.getConfiguration().containsKey(SERVICE_PORT_KEY)) {
-			return defaultValue;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(SERVICE_PORT_KEY);
-		}
+		return cr.getConfiguration().getInt(SERVICE_PORT_KEY, SERVICE_PORT_DEFAULT);
 	}
 
 	/**
@@ -289,14 +281,19 @@ public class Configuration {
 	public List<String> getListOfMachineNames() {
 
 		if (cr.getConfiguration().containsKey(LIST_OF_MACHINE_NAMES_KEY)) {
+			
 			String[] names = cr.getConfiguration().getStringArray(
 				LIST_OF_MACHINE_NAMES_KEY);
 
 			for (int i = 0; i < names.length; i++) {
+				
 				names[i] = names[i].trim().toLowerCase();
 			}
+		
 			return Arrays.asList(names);
+		
 		} else {
+			
 			return Arrays.asList(new String[] { "localhost" });
 		}
 	}
@@ -316,14 +313,17 @@ public class Configuration {
 
 		if (cr.getConfiguration().containsKey(LIST_OF_MACHINE_IPS_KEY)) {
 
-			String[] names = cr.getConfiguration().getString(LIST_OF_MACHINE_IPS_KEY)
-				.split(";"); // split
+			String[] names = cr.getConfiguration().getString(LIST_OF_MACHINE_IPS_KEY).split(";");
+			
 			for (int i = 0; i < names.length; i++) {
-				names[i] = names[i].trim().toLowerCase(); // for each bit remove
+			
+				names[i] = names[i].trim().toLowerCase();
 			}
+			
 			return Arrays.asList(names);
 
 		} else {
+			
 			return Arrays.asList(new String[] { "127.0.0.1" });
 		}
 	}
@@ -336,20 +336,7 @@ public class Configuration {
 	 */
 	public String getDBDriver() {
 
-		if (!cr.getConfiguration().containsKey(DB_DRIVER_KEY)) {
-			// return default
-			return "com.mysql.jdbc.Driver";
-		} else {
-			// load from external source
-			String vendor = cr.getConfiguration().getString(DB_DRIVER_KEY);
-			String driver = "";
-			if (vendor.toLowerCase().equals("mysql")) {
-				driver = "com.mysql.jdbc.Driver";
-			} else {
-				log.error("CONFIG ERROR 'RDBMS Vendor ('" + vendor + "')unknown.' ");
-			}
-			return driver;
-		}
+		return "com.mysql.jdbc.Driver";
 	}
 
 	/**
@@ -364,34 +351,12 @@ public class Configuration {
 	 */
 	public String getDBURL() {
 
-		String prefix = "";
-		String host = "";
-		String name = "";
-		// get prefix...
-		if (!cr.getConfiguration().containsKey(DB_URL_1KEY)) {
-			// use default
-			prefix = "jdbc:mysql://";
-		} else {
-			// load from external source
-			prefix = cr.getConfiguration().getString(DB_URL_1KEY);
-		}
-		// get host...
-		if (!cr.getConfiguration().containsKey(DB_URL_2KEY)) {
-			// use default
-			host = "localhost";
-		} else {
-			// load from external source
-			host = cr.getConfiguration().getString(DB_URL_2KEY);
-		}
-		// get db name...
-		if (!cr.getConfiguration().containsKey(DB_URL_3KEY)) {
-			// use default
-			name = "storm_db";
-		} else {
-			// load from external source
-			name = cr.getConfiguration().getString(DB_URL_3KEY);
-		}
-		// return value...
+		String prefix = cr.getConfiguration().getString(DB_URL_1KEY, "jdbc:mysql://");
+		
+		String host = cr.getConfiguration().getString(DB_URL_2KEY, "localhost");
+		
+		String name = cr.getConfiguration().getString(DB_URL_3KEY, "storm_db");
+		
 		return prefix + host + "/" + name;
 	}
 
@@ -403,13 +368,7 @@ public class Configuration {
 	 */
 	public String getDBUserName() {
 
-		if (!cr.getConfiguration().containsKey(DB_USER_NAME_KEY)) {
-			// return default
-			return "storm";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(DB_USER_NAME_KEY);
-		}
+		return cr.getConfiguration().getString(DB_USER_NAME_KEY, "storm");
 	}
 
 	/**
@@ -420,20 +379,8 @@ public class Configuration {
 	 */
 	public String getDBPassword() {
 
-		if (!cr.getConfiguration().containsKey(DB_PASSWORD_KEY)) {
-			// return default
-			return "storm";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(DB_PASSWORD_KEY);
-		}
+		return cr.getConfiguration().getString(DB_PASSWORD_KEY, "storm");
 	}
-
-	/*
-	 * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ## ## END
-	 * definition of MANDATORY PROPERTIESs ##
-	 * ############################################################
-	 */
 
 	/**
 	 * Method used by all DAOs to establish the reconnection period in _seconds_:
@@ -450,13 +397,7 @@ public class Configuration {
 	 */
 	public long getDBReconnectPeriod() {
 
-		if (!cr.getConfiguration().containsKey(DB_RECONNECT_PERIOD_KEY)) {
-			// return default
-			return 18000; // 18000 sec = 5 hours
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(DB_RECONNECT_PERIOD_KEY);
-		}
+		return cr.getConfiguration().getLong(DB_RECONNECT_PERIOD_KEY, 18000);
 	}
 
 	/**
@@ -470,13 +411,7 @@ public class Configuration {
 	 */
 	public long getDBReconnectDelay() {
 
-		if (!cr.getConfiguration().containsKey(DB_RECONNECT_DELAY_KEY)) {
-			// return default
-			return 30;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(DB_RECONNECT_DELAY_KEY);
-		}
+		return cr.getConfiguration().getLong(DB_RECONNECT_DELAY_KEY, 30);
 	}
 
 	/**
@@ -487,13 +422,7 @@ public class Configuration {
 	 */
 	public long getCleaningInitialDelay() {
 
-		if (!cr.getConfiguration().containsKey(CLEANING_INITIAL_DELAY_KEY)) {
-			// return default
-			return 10;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(CLEANING_INITIAL_DELAY_KEY);
-		}
+		return cr.getConfiguration().getLong(CLEANING_INITIAL_DELAY_KEY, 10);
 	}
 
 	/**
@@ -504,13 +433,7 @@ public class Configuration {
 	 */
 	public long getCleaningTimeInterval() {
 
-		if (!cr.getConfiguration().containsKey(CLEANING_TIME_INTERVAL_KEY)) {
-			// return default
-			return 300;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(CLEANING_TIME_INTERVAL_KEY);
-		}
+		return cr.getConfiguration().getLong(CLEANING_TIME_INTERVAL_KEY, 300);
 	}
 
 	/**
@@ -520,13 +443,7 @@ public class Configuration {
 	 */
 	public long getFileDefaultSize() {
 
-		if (!cr.getConfiguration().containsKey(FILE_DEFAULT_SIZE_KEY)) {
-			// return default
-			return (1000000); // 1 MB
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(FILE_DEFAULT_SIZE_KEY);
-		}
+		return cr.getConfiguration().getLong(FILE_DEFAULT_SIZE_KEY, 1000000);
 	}
 
 	/**
@@ -538,13 +455,7 @@ public class Configuration {
 	 */
 	public long getFileLifetimeDefault() {
 
-		if (!cr.getConfiguration().containsKey(FILE_LIFETIME_DEFAULT_KEY)) {
-			// return default
-			return 3600;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(FILE_LIFETIME_DEFAULT_KEY);
-		}
+		return cr.getConfiguration().getLong(FILE_LIFETIME_DEFAULT_KEY, 3600);
 	}
 
 	/**
@@ -557,13 +468,7 @@ public class Configuration {
 	 */
 	public long getPinLifetimeDefault() {
 
-		if (!cr.getConfiguration().containsKey(PIN_LIFETIME_DEFAULT_KEY)) {
-			// return default
-			return 259200;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(PIN_LIFETIME_DEFAULT_KEY);
-		}
+		return cr.getConfiguration().getLong(PIN_LIFETIME_DEFAULT_KEY, 259200);
 	}
 
 	/**
@@ -575,13 +480,7 @@ public class Configuration {
 	 */
 	public long getPinLifetimeMaximum() {
 
-		if (!cr.getConfiguration().containsKey(PIN_LIFETIME_MAXIMUM_KEY)) {
-			// return default
-			return 1814400;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(PIN_LIFETIME_MAXIMUM_KEY);
-		}
+		return cr.getConfiguration().getLong(PIN_LIFETIME_MAXIMUM_KEY, 1814400);
 	}
 
 	/**
@@ -592,13 +491,7 @@ public class Configuration {
 	 */
 	public long getTransitInitialDelay() {
 
-		if (!cr.getConfiguration().containsKey(TRANSIT_INITIAL_DELAY_KEY)) {
-			// return default
-			return 10;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(TRANSIT_INITIAL_DELAY_KEY);
-		}
+		return cr.getConfiguration().getLong(TRANSIT_INITIAL_DELAY_KEY, 10);
 	}
 
 	/**
@@ -609,13 +502,7 @@ public class Configuration {
 	 */
 	public long getTransitTimeInterval() {
 
-		if (!cr.getConfiguration().containsKey(TRANSIT_TIME_INTERVAL_KEY)) {
-			// return default
-			return 300;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(TRANSIT_TIME_INTERVAL_KEY);
-		}
+		return cr.getConfiguration().getLong(TRANSIT_TIME_INTERVAL_KEY, 300);
 	}
 
 	/**
@@ -626,13 +513,7 @@ public class Configuration {
 	 */
 	public long getPickingInitialDelay() {
 
-		if (!cr.getConfiguration().containsKey(PICKING_INITIAL_DELAY_KEY)) {
-			// return default
-			return 1;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(PICKING_INITIAL_DELAY_KEY);
-		}
+		return cr.getConfiguration().getLong(PICKING_INITIAL_DELAY_KEY, 1);
 	}
 
 	/**
@@ -643,13 +524,7 @@ public class Configuration {
 	 */
 	public long getPickingTimeInterval() {
 
-		if (!cr.getConfiguration().containsKey(PICKING_TIME_INTERVAL_KEY)) {
-			// return default
-			return 2;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(PICKING_TIME_INTERVAL_KEY);
-		}
+		return cr.getConfiguration().getLong(PICKING_TIME_INTERVAL_KEY, 2);
 	}
 
 	/**
@@ -660,13 +535,7 @@ public class Configuration {
 	 */
 	public int getPickingMaxBatchSize() {
 
-		if (!cr.getConfiguration().containsKey(PICKING_MAX_BATCH_SIZE_KEY)) {
-			// return default
-			return 100;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(PICKING_MAX_BATCH_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(PICKING_MAX_BATCH_SIZE_KEY, 100);
 	}
 
 	/**
@@ -679,13 +548,7 @@ public class Configuration {
 	 */
 	public long getSRMClientPutTotalRetryTime() {
 
-		if (!cr.getConfiguration().containsKey(SRMCLIENT_PUT_TOTAL_RETRY_TIME_KEY)) {
-			// return default
-			return 60;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(SRMCLIENT_PUT_TOTAL_RETRY_TIME_KEY);
-		}
+		return cr.getConfiguration().getLong(SRMCLIENT_PUT_TOTAL_RETRY_TIME_KEY, 60);
 	}
 
 	/**
@@ -698,13 +561,7 @@ public class Configuration {
 	 */
 	public long getSRMClientPutTimeOut() {
 
-		if (!cr.getConfiguration().containsKey(SRMCLIENT_PUT_TIME_OUT_KEY)) {
-			// return default
-			return 180;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(SRMCLIENT_PUT_TIME_OUT_KEY);
-		}
+		return cr.getConfiguration().getLong(SRMCLIENT_PUT_TIME_OUT_KEY, 180);
 	}
 
 	/**
@@ -717,13 +574,7 @@ public class Configuration {
 	 */
 	public long getSRMClientPutSleepTime() {
 
-		if (!cr.getConfiguration().containsKey(SRMCLIENT_PUT_SLEEP_TIME_KEY)) {
-			// return default
-			return 5;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(SRMCLIENT_PUT_SLEEP_TIME_KEY);
-		}
+		return cr.getConfiguration().getLong(SRMCLIENT_PUT_SLEEP_TIME_KEY, 5);
 	}
 
 	/**
@@ -738,13 +589,7 @@ public class Configuration {
 	 */
 	public long getSRMClientPutDoneSleepTime() {
 
-		if (!cr.getConfiguration().containsKey(SRMCLIENT_PUT_DONE_SLEEP_TIME_KEY)) {
-			// return default
-			return 1;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(SRMCLIENT_PUT_DONE_SLEEP_TIME_KEY);
-		}
+		return cr.getConfiguration().getLong(SRMCLIENT_PUT_DONE_SLEEP_TIME_KEY, 1);
 	}
 
 	/**
@@ -757,14 +602,8 @@ public class Configuration {
 	 * returned instead. key="asynch.srmclient.putdone.timeout"; default value=60;
 	 */
 	public long getSRMClientPutDoneTimeOut() {
-
-		if (!cr.getConfiguration().containsKey(SRMCLIENT_PUT_DONE_TIME_OUT_KEY)) {
-			// return default
-			return 60;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getLong(SRMCLIENT_PUT_DONE_TIME_OUT_KEY);
-		}
+		
+		return cr.getConfiguration().getLong(SRMCLIENT_PUT_DONE_TIME_OUT_KEY, 60);
 	}
 
 	/**
@@ -772,13 +611,7 @@ public class Configuration {
 	 */
 	public int getMaxXMLRPCThread() {
 
-		if (!cr.getConfiguration().containsKey(MAX_XMLRPC_THREAD_KEY)) {
-			// return default
-			return 100;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(MAX_XMLRPC_THREAD_KEY);
-		}
+		return cr.getConfiguration().getInt(MAX_XMLRPC_THREAD_KEY, 100);
 	}
 
 	/**
@@ -790,14 +623,17 @@ public class Configuration {
 
 		if (cr.getConfiguration().containsKey(LIST_OF_DEFAULT_SPACE_TOKEN_KEY)) {
 
-			String[] namesArray = cr.getConfiguration().getStringArray(
-				LIST_OF_DEFAULT_SPACE_TOKEN_KEY);
+			String[] namesArray = cr.getConfiguration().getStringArray(LIST_OF_DEFAULT_SPACE_TOKEN_KEY);
+			
 			if (namesArray == null) {
+			
 				return new ArrayList<String>();
 			}
+			
 			return Arrays.asList(namesArray);
 
 		} else {
+			
 			return new ArrayList<String>();
 		}
 	}
@@ -813,13 +649,7 @@ public class Configuration {
 	 */
 	public String getGridFTPTransferClient() {
 
-		if (!cr.getConfiguration().containsKey(GRIDFTP_TRANSFER_CLIENT_KEY)) {
-			// return default
-			return "it.grid.storm.asynch.NaiveGridFTPTransferClient";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(GRIDFTP_TRANSFER_CLIENT_KEY);
-		}
+		return cr.getConfiguration().getString(GRIDFTP_TRANSFER_CLIENT_KEY, "it.grid.storm.asynch.NaiveGridFTPTransferClient");
 	}
 
 	/**
@@ -832,13 +662,7 @@ public class Configuration {
 	 */
 	public String getSRMClient() {
 
-		if (!cr.getConfiguration().containsKey(SRMCLIENT_KEY)) {
-			// return default
-			return "it.grid.storm.asynch.SRM22Client";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(SRMCLIENT_KEY);
-		}
+		return cr.getConfiguration().getString(SRMCLIENT_KEY, "it.grid.storm.asynch.SRM22Client");
 	}
 
 	/**
@@ -849,13 +673,7 @@ public class Configuration {
 	 */
 	public int getCommandServerBindingPort() {
 
-		if (!cr.getConfiguration().containsKey(COMMAND_SERVER_BINDING_PORT_KEY)) {
-			// return default
-			return 4444;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(COMMAND_SERVER_BINDING_PORT_KEY);
-		}
+		return cr.getConfiguration().getInt(COMMAND_SERVER_BINDING_PORT_KEY, 4444);
 	}
 
 	/**
@@ -866,15 +684,9 @@ public class Configuration {
 	 */
 	public boolean getSerialScheduler() {
 
-		if (!cr.getConfiguration().containsKey(SERIAL_SCHEDULER_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(SERIAL_SCHEDULER_KEY);
-		}
+		return cr.getConfiguration().getBoolean(SERIAL_SCHEDULER_KEY, false);
 	}
-
+	
 	/**
 	 * Method used in Persistence Component It returns the DB vendor name. If no
 	 * value is found in the configuration medium, then the default value is
@@ -882,13 +694,7 @@ public class Configuration {
 	 */
 	public String getBEPersistenceDBVendor() {
 
-		if (!cr.getConfiguration().containsKey(BE_PERSISTENCE_DB_VENDOR_KEY)) {
-			// return default
-			return "mysql";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(BE_PERSISTENCE_DB_VENDOR_KEY);
-		}
+		return "mysql";
 	}
 
 	/**
@@ -899,18 +705,9 @@ public class Configuration {
 	 */
 	public String getBEPersistenceDBMSUrl() {
 
-		if (!cr.getConfiguration().containsKey(BE_PERSISTENCE_DBMS_URL_1KEY)) {
-			// Try with the alternative key
-			if (!cr.getConfiguration().containsKey(BE_PERSISTENCE_DBMS_URL_2KEY)) {
-				// return default
-				return "localhost";
-			} else {
-				return cr.getConfiguration().getString(BE_PERSISTENCE_DBMS_URL_2KEY);
-			}
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(BE_PERSISTENCE_DBMS_URL_1KEY);
-		}
+		return cr.getConfiguration().getString(BE_PERSISTENCE_DBMS_URL_1KEY,
+			cr.getConfiguration().getString(BE_PERSISTENCE_DBMS_URL_2KEY, "localhost"));
+		
 	}
 
 	/**
@@ -920,13 +717,7 @@ public class Configuration {
 	 */
 	public String getBEPersistenceDBName() {
 
-		if (!cr.getConfiguration().containsKey(BE_PERSISTENCE_DB_NAME_KEY)) {
-			// return default
-			return "storm_be_ISAM";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(BE_PERSISTENCE_DB_NAME_KEY);
-		}
+		return cr.getConfiguration().getString(BE_PERSISTENCE_DB_NAME_KEY, "storm_be_ISAM");
 	}
 
 	/**
@@ -937,18 +728,8 @@ public class Configuration {
 	 */
 	public String getBEPersistenceDBUserName() {
 
-		if (!cr.getConfiguration().containsKey(BE_PERSISTENCEDB_USER_NAME_1KEY)) {
-			// Try with the alternative key
-			if (!cr.getConfiguration().containsKey(BE_PERSISTENCEDB_USER_NAME_2KEY)) {
-				// return default
-				return "storm";
-			} else {
-				return cr.getConfiguration().getString(BE_PERSISTENCEDB_USER_NAME_2KEY);
-			}
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(BE_PERSISTENCEDB_USER_NAME_1KEY);
-		}
+		return cr.getConfiguration().getString(BE_PERSISTENCEDB_USER_NAME_1KEY,
+			cr.getConfiguration().getString(BE_PERSISTENCEDB_USER_NAME_2KEY, "storm"));
 	}
 
 	/**
@@ -959,18 +740,8 @@ public class Configuration {
 	 */
 	public String getBEPersistenceDBPassword() {
 
-		if (!cr.getConfiguration().containsKey(BE_PERSISTENCE_DB_PASSWORD_1KEY)) {
-			// Try with the alternative key
-			if (!cr.getConfiguration().containsKey(BE_PERSISTENCE_DB_PASSWORD_2KEY)) {
-				// return default
-				return "storm";
-			} else {
-				return cr.getConfiguration().getString(BE_PERSISTENCE_DB_PASSWORD_2KEY);
-			}
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(BE_PERSISTENCE_DB_PASSWORD_1KEY);
-		}
+		return cr.getConfiguration().getString(BE_PERSISTENCE_DB_PASSWORD_1KEY,
+			cr.getConfiguration().getString(BE_PERSISTENCE_DB_PASSWORD_2KEY, "storm"));
 	}
 
 	/**
@@ -981,13 +752,7 @@ public class Configuration {
 	 */
 	public boolean getBEPersistencePoolDB() {
 
-		if (!cr.getConfiguration().containsKey(BE_PERSISTENCE_POOL_DB_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(BE_PERSISTENCE_POOL_DB_KEY);
-		}
+		return cr.getConfiguration().getBoolean(BE_PERSISTENCE_POOL_DB_KEY, false);
 	}
 
 	/**
@@ -1000,15 +765,7 @@ public class Configuration {
 	 */
 	public int getBEPersistencePoolDBMaxActive() {
 
-		if (!cr.getConfiguration().containsKey(
-			BE_PERSISTENCE_POOL_DB_MAX_ACTIVE_KEY)) {
-			// return default
-			return 10;
-		} else {
-			// load from external source
-			return cr.getConfiguration()
-				.getInt(BE_PERSISTENCE_POOL_DB_MAX_ACTIVE_KEY);
-		}
+		return cr.getConfiguration().getInt(BE_PERSISTENCE_POOL_DB_MAX_ACTIVE_KEY, 10);
 	}
 
 	/**
@@ -1022,13 +779,7 @@ public class Configuration {
 	 */
 	public int getBEPersistencePoolDBMaxWait() {
 
-		if (!cr.getConfiguration().containsKey(BE_PERSISTENCE_POOL_DB_MAX_WAIT_KEY)) {
-			// return default
-			return 50;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(BE_PERSISTENCE_POOL_DB_MAX_WAIT_KEY);
-		}
+		return cr.getConfiguration().getInt(BE_PERSISTENCE_POOL_DB_MAX_WAIT_KEY, 50);
 	}
 
 	/**
@@ -1039,13 +790,7 @@ public class Configuration {
 	 */
 	public int getXmlRpcServerPort() {
 
-		if (!cr.getConfiguration().containsKey(XMLRPC_SERVER_PORT_KEY)) {
-			// return default
-			return 8080;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(XMLRPC_SERVER_PORT_KEY);
-		}
+		return cr.getConfiguration().getInt(XMLRPC_SERVER_PORT_KEY, 8080);
 	}
 
 	/**
@@ -1058,13 +803,7 @@ public class Configuration {
 	 */
 	public int getLSMaxNumberOfEntry() {
 
-		if (!cr.getConfiguration().containsKey(LS_MAX_NUMBER_OF_ENTRY_KEY)) {
-			// return default
-			return 500;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(LS_MAX_NUMBER_OF_ENTRY_KEY);
-		}
+		return cr.getConfiguration().getInt(LS_MAX_NUMBER_OF_ENTRY_KEY, 500);
 	}
 
 	/**
@@ -1074,13 +813,7 @@ public class Configuration {
 	 */
 	public boolean getLSallLevelRecursive() {
 
-		if (!cr.getConfiguration().containsKey(LS_ALL_LEVEL_RECURSIVE_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(LS_ALL_LEVEL_RECURSIVE_KEY);
-		}
+		return cr.getConfiguration().getBoolean(LS_ALL_LEVEL_RECURSIVE_KEY, false);
 	}
 
 	/**
@@ -1090,13 +823,7 @@ public class Configuration {
 	 */
 	public int getLSnumOfLevels() {
 
-		if (!cr.getConfiguration().containsKey(LS_NUM_OF_LEVELS_KEY)) {
-			// return default
-			return 1;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(LS_NUM_OF_LEVELS_KEY);
-		}
+		return cr.getConfiguration().getInt(LS_NUM_OF_LEVELS_KEY, 1);
 	}
 
 	/**
@@ -1106,13 +833,7 @@ public class Configuration {
 	 */
 	public int getLSoffset() {
 
-		if (!cr.getConfiguration().containsKey(LS_OFFSET_KEY)) {
-			// return default
-			return 0;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(LS_OFFSET_KEY);
-		}
+		return cr.getConfiguration().getInt(LS_OFFSET_KEY, 0);
 	}
 
 	/**
@@ -1132,13 +853,7 @@ public class Configuration {
 	 */
 	public int getPtPCorePoolSize() {
 
-		if (!cr.getConfiguration().containsKey(PTP_CORE_POOL_SIZE_KEY)) {
-			// return default
-			return 50;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(PTP_CORE_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(PTP_CORE_POOL_SIZE_KEY, 50);
 	}
 
 	/**
@@ -1158,13 +873,7 @@ public class Configuration {
 	 */
 	public int getPtPMaxPoolSize() {
 
-		if (!cr.getConfiguration().containsKey(PTP_MAX_POOL_SIZE_KEY)) {
-			// return default
-			return 200;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(PTP_MAX_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(PTP_MAX_POOL_SIZE_KEY, 200);
 	}
 
 	/**
@@ -1185,13 +894,7 @@ public class Configuration {
 	 */
 	public int getPtPQueueSize() {
 
-		if (!cr.getConfiguration().containsKey(PTP_QUEUE_SIZE_KEY)) {
-			// return default
-			return 1000;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(PTP_QUEUE_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(PTP_QUEUE_SIZE_KEY, 1000);
 	}
 
 	/**
@@ -1211,13 +914,7 @@ public class Configuration {
 	 */
 	public int getPtGCorePoolSize() {
 
-		if (!cr.getConfiguration().containsKey(PTG_CORE_POOL_SIZE_KEY)) {
-			// return default
-			return 50;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(PTG_CORE_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(PTG_CORE_POOL_SIZE_KEY, 50);
 	}
 
 	/**
@@ -1237,13 +934,7 @@ public class Configuration {
 	 */
 	public int getPtGMaxPoolSize() {
 
-		if (!cr.getConfiguration().containsKey(PTG_MAX_POOL_SIZE_KEY)) {
-			// return default
-			return 200;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(PTG_MAX_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(PTG_MAX_POOL_SIZE_KEY, 200);
 	}
 
 	/**
@@ -1264,13 +955,7 @@ public class Configuration {
 	 */
 	public int getPtGQueueSize() {
 
-		if (!cr.getConfiguration().containsKey(PTG_QUEUE_SIZE_KEY)) {
-			// return default
-			return 2000;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(PTG_QUEUE_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(PTG_QUEUE_SIZE_KEY, 2000);
 	}
 
 	/**
@@ -1290,13 +975,7 @@ public class Configuration {
 	 */
 	public int getCopyCorePoolSize() {
 
-		if (!cr.getConfiguration().containsKey(COPY_CORE_POOL_SIZE_KEY)) {
-			// return default
-			return 10;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(COPY_CORE_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(COPY_CORE_POOL_SIZE_KEY, 10);
 	}
 
 	/**
@@ -1316,13 +995,7 @@ public class Configuration {
 	 */
 	public int getCopyMaxPoolSize() {
 
-		if (!cr.getConfiguration().containsKey(COPY_MAX_POOL_SIZE_KEY)) {
-			// return default
-			return 50;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(COPY_MAX_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(COPY_MAX_POOL_SIZE_KEY, 50);
 	}
 
 	/**
@@ -1343,13 +1016,7 @@ public class Configuration {
 	 */
 	public int getCopyQueueSize() {
 
-		if (!cr.getConfiguration().containsKey(COPY_QUEUE_SIZE_KEY)) {
-			// return default
-			return 500;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(COPY_QUEUE_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(COPY_QUEUE_SIZE_KEY, 500);
 	}
 
 	/**
@@ -1369,13 +1036,7 @@ public class Configuration {
 	 */
 	public int getBoLCorePoolSize() {
 
-		if (!cr.getConfiguration().containsKey(BOL_CORE_POOL_SIZE_KEY)) {
-			// return default
-			return 50;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(BOL_CORE_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(BOL_CORE_POOL_SIZE_KEY, 50);
 	}
 
 	/**
@@ -1395,13 +1056,7 @@ public class Configuration {
 	 */
 	public int getBoLMaxPoolSize() {
 
-		if (!cr.getConfiguration().containsKey(BOL_MAX_POOL_SIZE_KEY)) {
-			// return default
-			return 200;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(BOL_MAX_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(BOL_MAX_POOL_SIZE_KEY, 200);
 	}
 
 	/**
@@ -1421,13 +1076,7 @@ public class Configuration {
 	 */
 	public int getBoLQueueSize() {
 
-		if (!cr.getConfiguration().containsKey(BOL_QUEUE_SIZE_KEY)) {
-			// return default
-			return 2000;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(BOL_QUEUE_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(BOL_QUEUE_SIZE_KEY, 2000);
 	}
 
 	/**
@@ -1447,13 +1096,7 @@ public class Configuration {
 	 */
 	public int getCorePoolSize() {
 
-		if (!cr.getConfiguration().containsKey(CORE_POOL_SIZE_KEY)) {
-			// return default
-			return 10;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(CORE_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(CORE_POOL_SIZE_KEY, 10);
 	}
 
 	/**
@@ -1473,13 +1116,7 @@ public class Configuration {
 	 */
 	public int getMaxPoolSize() {
 
-		if (!cr.getConfiguration().containsKey(MAX_POOL_SIZE_KEY)) {
-			// return default
-			return 50;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(MAX_POOL_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(MAX_POOL_SIZE_KEY, 50);
 	}
 
 	/**
@@ -1499,13 +1136,7 @@ public class Configuration {
 	 */
 	public int getQueueSize() {
 
-		if (!cr.getConfiguration().containsKey(QUEUE_SIZE_KEY)) {
-			// return default
-			return 2000;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(QUEUE_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(QUEUE_SIZE_KEY, 2000);
 	}
 
 	/**
@@ -1515,13 +1146,7 @@ public class Configuration {
 	 */
 	public String getNamespaceConfigFilename() {
 
-		if (!cr.getConfiguration().containsKey(NAMESPACE_CONFIG_FILENAME_KEY)) {
-			// return default
-			return "namespace.xml";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(NAMESPACE_CONFIG_FILENAME_KEY);
-		}
+		return cr.getConfiguration().getString(NAMESPACE_CONFIG_FILENAME_KEY, "namespace.xml");
 	}
 
 	/**
@@ -1532,26 +1157,12 @@ public class Configuration {
 	 */
 	public String getNamespaceSchemaFilename() {
 
-		if (!cr.getConfiguration().containsKey(NAMESPACE_SCHEMA_FILENAME_KEY)) {
-			return "Schema UNKNOWN!";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(NAMESPACE_SCHEMA_FILENAME_KEY);
-		}
+		return cr.getConfiguration().getString(NAMESPACE_SCHEMA_FILENAME_KEY, "Schema UNKNOWN!");
 	}
 
 	public int getNamespaceConfigRefreshRateInSeconds() {
 
-		if (!cr.getConfiguration().containsKey(
-			NAMESPACE_CONFIG_REFRESH_RATE_IN_SECONDS_KEY)) {
-			// return default
-			return 3;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(
-				NAMESPACE_CONFIG_REFRESH_RATE_IN_SECONDS_KEY);
-		}
-
+		return cr.getConfiguration().getInt(NAMESPACE_CONFIG_REFRESH_RATE_IN_SECONDS_KEY, 3);
 	}
 
 	/**
@@ -1565,14 +1176,7 @@ public class Configuration {
 	 */
 	public boolean getNamespaceAutomaticReloading() {
 
-		if (!cr.getConfiguration().containsKey(NAMESPACE_AUTOMATIC_RELOADING_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration()
-				.getBoolean(NAMESPACE_AUTOMATIC_RELOADING_KEY);
-		}
+			return cr.getConfiguration().getBoolean(NAMESPACE_AUTOMATIC_RELOADING_KEY, false);
 	}
 
 	/**
@@ -1583,13 +1187,7 @@ public class Configuration {
 	 */
 	public int getGridFTPTimeOut() {
 
-		if (!cr.getConfiguration().containsKey(GRIDFTP_TIME_OUT_KEY)) {
-			// return default
-			return 15000;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(GRIDFTP_TIME_OUT_KEY);
-		}
+		return cr.getConfiguration().getInt(GRIDFTP_TIME_OUT_KEY, 15000);
 	}
 
 	/**
@@ -1600,13 +1198,7 @@ public class Configuration {
 	 */
 	public int getSRM22ClientPinLifeTime() {
 
-		if (!cr.getConfiguration().containsKey(SRM22CLIENT_PIN_LIFE_TIME_KEY)) {
-			// return default
-			return 259200;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(SRM22CLIENT_PIN_LIFE_TIME_KEY);
-		}
+		return cr.getConfiguration().getInt(SRM22CLIENT_PIN_LIFE_TIME_KEY, 259200);
 	}
 
 	/**
@@ -1617,13 +1209,7 @@ public class Configuration {
 	 */
 	public String getProxyHome() {
 
-		if (!cr.getConfiguration().containsKey(PROXY_HOME_KEY)) {
-			// return default
-			return "/opt/storm/var/proxies";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(PROXY_HOME_KEY);
-		}
+		return cr.getConfiguration().getString(PROXY_HOME_KEY, "/opt/storm/var/proxies");
 	}
 
 	/**
@@ -1635,13 +1221,7 @@ public class Configuration {
 	 */
 	public boolean getAutomaticDirectoryCreation() {
 
-		if (!cr.getConfiguration().containsKey(AUTOMATIC_DIRECTORY_CREATION_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(AUTOMATIC_DIRECTORY_CREATION_KEY);
-		}
+		return cr.getConfiguration().getBoolean(AUTOMATIC_DIRECTORY_CREATION_KEY, false);
 	}
 
 	/**
@@ -1652,13 +1232,7 @@ public class Configuration {
 	 */
 	public String getDefaultOverwriteMode() {
 
-		if (!cr.getConfiguration().containsKey(DEFAULT_OVERWRITE_MODE_KEY)) {
-			// return default
-			return "N";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(DEFAULT_OVERWRITE_MODE_KEY);
-		}
+		return cr.getConfiguration().getString(DEFAULT_OVERWRITE_MODE_KEY, "N");
 	}
 
 	/**
@@ -1669,13 +1243,7 @@ public class Configuration {
 	 */
 	public String getDefaultFileStorageType() {
 
-		if (!cr.getConfiguration().containsKey(DEFAULT_FILE_STORAGE_TYPE_KEY)) {
-			// return default as specified in SRMv2.2 specification
-			return "V";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(DEFAULT_FILE_STORAGE_TYPE_KEY);
-		}
+		return cr.getConfiguration().getString(DEFAULT_FILE_STORAGE_TYPE_KEY, "V");
 	}
 
 	/**
@@ -1685,13 +1253,7 @@ public class Configuration {
 	 */
 	public int getPurgeBatchSize() {
 
-		if (!cr.getConfiguration().containsKey(PURGE_BATCH_SIZE_KEY)) {
-			// return default
-			return 800;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(PURGE_BATCH_SIZE_KEY);
-		}
+		return cr.getConfiguration().getInt(PURGE_BATCH_SIZE_KEY, 800);
 	}
 
 	/**
@@ -1704,13 +1266,7 @@ public class Configuration {
 	 */
 	public long getExpiredRequestTime() {
 
-		if (!cr.getConfiguration().containsKey(EXPIRED_REQUEST_TIME_KEY)) {
-			// 7 * 24 * 60 * 60
-			return 604800;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(EXPIRED_REQUEST_TIME_KEY);
-		}
+		return cr.getConfiguration().getInt(EXPIRED_REQUEST_TIME_KEY, 604800);
 	}
 
 	/**
@@ -1721,13 +1277,7 @@ public class Configuration {
 	 */
 	public int getRequestPurgerDelay() {
 
-		if (!cr.getConfiguration().containsKey(REQUEST_PURGER_DELAY_KEY)) {
-			// return default
-			return 10;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(REQUEST_PURGER_DELAY_KEY);
-		}
+		return cr.getConfiguration().getInt(REQUEST_PURGER_DELAY_KEY, 10);
 	}
 
 	/**
@@ -1738,13 +1288,7 @@ public class Configuration {
 	 */
 	public int getRequestPurgerPeriod() {
 
-		if (!cr.getConfiguration().containsKey(REQUEST_PURGER_PERIOD_KEY)) {
-			// return default
-			return 600;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(REQUEST_PURGER_PERIOD_KEY);
-		}
+		return cr.getConfiguration().getInt(REQUEST_PURGER_PERIOD_KEY, 600);
 	}
 
 	/**
@@ -1755,13 +1299,7 @@ public class Configuration {
 	 */
 	public boolean getExpiredRequestPurging() {
 
-		if (!cr.getConfiguration().containsKey(EXPIRED_REQUEST_PURGING_KEY)) {
-			// return default
-			return true;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(EXPIRED_REQUEST_PURGING_KEY);
-		}
+		return cr.getConfiguration().getBoolean(EXPIRED_REQUEST_PURGING_KEY, true);
 	}
 
 	/**
@@ -1772,13 +1310,7 @@ public class Configuration {
 	 */
 	public String getExtraSlashesForFileTURL() {
 
-		if (!cr.getConfiguration().containsKey(EXTRA_SLASHES_FOR_FILE_TURL_KEY)) {
-			// return default
-			return "";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(EXTRA_SLASHES_FOR_FILE_TURL_KEY);
-		}
+		return cr.getConfiguration().getString(EXTRA_SLASHES_FOR_FILE_TURL_KEY, "");
 	}
 
 	/**
@@ -1790,13 +1322,7 @@ public class Configuration {
 	 */
 	public String getExtraSlashesForRFIOTURL() {
 
-		if (!cr.getConfiguration().containsKey(EXTRA_SLASHES_FOR_RFIO_TURL_KEY)) {
-			// return default
-			return "";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(EXTRA_SLASHES_FOR_RFIO_TURL_KEY);
-		}
+		return cr.getConfiguration().getString(EXTRA_SLASHES_FOR_RFIO_TURL_KEY, "");
 	}
 
 	/**
@@ -1808,13 +1334,7 @@ public class Configuration {
 	 */
 	public String getExtraSlashesForGsiFTPTURL() {
 
-		if (!cr.getConfiguration().containsKey(EXTRA_SLASHES_FOR_GSIFTP_TURL_KEY)) {
-			// return default
-			return "";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(EXTRA_SLASHES_FOR_GSIFTP_TURL_KEY);
-		}
+		return cr.getConfiguration().getString(EXTRA_SLASHES_FOR_GSIFTP_TURL_KEY, "");
 	}
 
 	/**
@@ -1826,13 +1346,7 @@ public class Configuration {
 	 */
 	public String getExtraSlashesForROOTTURL() {
 
-		if (!cr.getConfiguration().containsKey(EXTRA_SLASHES_FOR_ROOT_TURL_KEY)) {
-			// return default
-			return "/";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(EXTRA_SLASHES_FOR_ROOT_TURL_KEY);
-		}
+		return cr.getConfiguration().getString(EXTRA_SLASHES_FOR_ROOT_TURL_KEY, "/");
 	}
 
 	/**
@@ -1845,14 +1359,8 @@ public class Configuration {
 	 */
 	public String getPingValuesPropertiesFilename() {
 
-		if (!cr.getConfiguration().containsKey(PING_VALUES_PROPERTIES_FILENAME_KEY)) {
-			// return default
-			return "ping-values.properties";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(
-				PING_VALUES_PROPERTIES_FILENAME_KEY);
-		}
+		return cr.getConfiguration().getString(PING_VALUES_PROPERTIES_FILENAME_KEY, 
+			"ping-values.properties");
 	}
 
 	/**
@@ -1862,13 +1370,7 @@ public class Configuration {
 	 */
 	public int getHearthbeatPeriod() {
 
-		if (!cr.getConfiguration().containsKey(HEARTHBEAT_PERIOD_KEY)) {
-			// return default
-			return 60;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(HEARTHBEAT_PERIOD_KEY);
-		}
+		return cr.getConfiguration().getInt(HEARTHBEAT_PERIOD_KEY, 60);
 	}
 
 	/**
@@ -1881,14 +1383,7 @@ public class Configuration {
 	 */
 	public int getPerformanceGlanceTimeInterval() {
 
-		if (!cr.getConfiguration()
-			.containsKey(PERFORMANCE_GLANCE_TIME_INTERVAL_KEY)) {
-			// return default
-			return 15;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(PERFORMANCE_GLANCE_TIME_INTERVAL_KEY);
-		}
+		return cr.getConfiguration().getInt(PERFORMANCE_GLANCE_TIME_INTERVAL_KEY, 15);
 	}
 
 	/**
@@ -1901,15 +1396,7 @@ public class Configuration {
 	 */
 	public int getPerformanceLogbookTimeInterval() {
 
-		if (!cr.getConfiguration().containsKey(
-			PERFORMANCE_LOGBOOK_TIME_INTERVAL_KEY)) {
-			// return default
-			return 15;
-		} else {
-			// load from external source
-			return cr.getConfiguration()
-				.getInt(PERFORMANCE_LOGBOOK_TIME_INTERVAL_KEY);
-		}
+			return cr.getConfiguration().getInt(PERFORMANCE_LOGBOOK_TIME_INTERVAL_KEY, 15);
 	}
 
 	/**
@@ -1921,13 +1408,7 @@ public class Configuration {
 	 */
 	public boolean getPerformanceMeasuring() {
 
-		if (!cr.getConfiguration().containsKey(PERFORMANCE_MEASURING_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(PERFORMANCE_MEASURING_KEY);
-		}
+		return cr.getConfiguration().getBoolean(PERFORMANCE_MEASURING_KEY, false);
 	}
 
 	/**
@@ -1941,13 +1422,7 @@ public class Configuration {
 	 */
 	public boolean getBookKeepingEnabled() {
 
-		if (!cr.getConfiguration().containsKey(BOOK_KEEPING_ENABLED_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(BOOK_KEEPING_ENABLED_KEY);
-		}
+		return cr.getConfiguration().getBoolean(BOOK_KEEPING_ENABLED_KEY, false);
 	}
 
 	/**
@@ -1958,25 +1433,12 @@ public class Configuration {
 	 */
 	public boolean getEnableWritePermOnDirectory() {
 
-		if (!cr.getConfiguration().containsKey(ENABLE_WRITE_PERM_ON_DIRECTORY_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(
-				ENABLE_WRITE_PERM_ON_DIRECTORY_KEY, false);
-		}
+		return cr.getConfiguration().getBoolean(ENABLE_WRITE_PERM_ON_DIRECTORY_KEY, false);
 	}
 
 	public int getMaxLoop() {
 
-		if (!cr.getConfiguration().containsKey(MAX_LOOP_KEY)) {
-			// return default
-			return 10;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(MAX_LOOP_KEY);
-		}
+		return cr.getConfiguration().getInt(MAX_LOOP_KEY, 10);
 	}
 
 	/**
@@ -1987,13 +1449,8 @@ public class Configuration {
 	 */
 	public String getGridUserMapperClassname() {
 
-		if (!cr.getConfiguration().containsKey(GRID_USER_MAPPER_CLASSNAME_KEY)) {
-			// return default
-			return "it.grid.storm.griduser.StormLcmapsJNAMapper";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(GRID_USER_MAPPER_CLASSNAME_KEY);
-		}
+		return cr.getConfiguration().getString(GRID_USER_MAPPER_CLASSNAME_KEY,
+			"it.grid.storm.griduser.StormLcmapsJNAMapper");
 	}
 
 	/**
@@ -2003,13 +1460,7 @@ public class Configuration {
 	 */
 	public String getAuthzDBPath() {
 
-		if (!cr.getConfiguration().containsKey(AUTHZ_DB_PATH_KEY)) {
-			// return default
-			return cr.configurationDirectory();
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(AUTHZ_DB_PATH_KEY);
-		}
+		return cr.getConfiguration().getString(AUTHZ_DB_PATH_KEY, cr.configurationDirectory());
 	}
 
 	/**
@@ -2019,23 +1470,12 @@ public class Configuration {
 	 */
 	public int getRefreshRateAuthzDBfilesInSeconds() {
 
-		if (!cr.getConfiguration().containsKey(
-			REFRESH_RATE_AUTHZDB_FILES_IN_SECONDS_KEY)) {
-			// return default
-			return 5;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(
-				REFRESH_RATE_AUTHZDB_FILES_IN_SECONDS_KEY);
-		}
+			return cr.getConfiguration().getInt(REFRESH_RATE_AUTHZDB_FILES_IN_SECONDS_KEY, 5);
 	}
 
 	public boolean getRecallTableTestingMode() {
 
-		if (cr.getConfiguration().containsKey(RECALL_TABLE_TESTING_MODE_KEY)) {
-			return cr.getConfiguration().getBoolean(RECALL_TABLE_TESTING_MODE_KEY);
-		}
-		return false;
+		return cr.getConfiguration().getBoolean(RECALL_TABLE_TESTING_MODE_KEY, false);
 	}
 
 	/**
@@ -2046,13 +1486,7 @@ public class Configuration {
 	 */
 	public int getRestServicesPort() {
 
-		if (!cr.getConfiguration().containsKey(REST_SERVICES_PORT_KEY)) {
-			// return default
-			return 9998;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(REST_SERVICES_PORT_KEY);
-		}
+		return cr.getConfiguration().getInt(REST_SERVICES_PORT_KEY, 9998);
 	}
 
 	/**
@@ -2061,13 +1495,7 @@ public class Configuration {
 	 */
 	public String getRetryValueKey() {
 
-		if (!cr.getConfiguration().containsKey(RETRY_VALUE_KEY_KEY)) {
-			// return default
-			return "retry-value";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(RETRY_VALUE_KEY_KEY);
-		}
+		return cr.getConfiguration().getString(RETRY_VALUE_KEY_KEY, "retry-value");
 	}
 
 	/**
@@ -2076,13 +1504,7 @@ public class Configuration {
 	 */
 	public String getStatusKey() {
 
-		if (!cr.getConfiguration().containsKey(STATUS_KEY_KEY)) {
-			// return default
-			return "status";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(STATUS_KEY_KEY);
-		}
+		return cr.getConfiguration().getString(STATUS_KEY_KEY, "status");
 	}
 
 	/**
@@ -2091,13 +1513,7 @@ public class Configuration {
 	 */
 	public String getTaskoverKey() {
 
-		if (!cr.getConfiguration().containsKey(TASKOVER_KEY_KEY)) {
-			// return default
-			return "first";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(TASKOVER_KEY_KEY);
-		}
+		return cr.getConfiguration().getString(TASKOVER_KEY_KEY, "first");
 	}
 
 	/**
@@ -2107,24 +1523,12 @@ public class Configuration {
 	 */
 	public boolean getGridhttpsEnabled() {
 
-		if (!cr.getConfiguration().containsKey(GRIDHTTPS_ENABLED_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(GRIDHTTPS_ENABLED_KEY);
-		}
+		return cr.getConfiguration().getBoolean(GRIDHTTPS_ENABLED_KEY, false);
 	}
 
 	public String getStoRMPropertiesVersion() {
 
-		if (!cr.getConfiguration().containsKey(STORM_PROPERTIES_VERSION_KEY)) {
-			// return default
-			return "No version specified";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(STORM_PROPERTIES_VERSION_KEY);
-		}
+		return cr.getConfiguration().getString(STORM_PROPERTIES_VERSION_KEY, "No version specified");
 	}
 
 	/**
@@ -2134,35 +1538,17 @@ public class Configuration {
 	 */
 	public boolean getTapeSupportEnabled() {
 
-		if (!cr.getConfiguration().containsKey(TAPE_SUPPORT_ENABLED_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(TAPE_SUPPORT_ENABLED_KEY);
-		}
+		return cr.getConfiguration().getBoolean(TAPE_SUPPORT_ENABLED_KEY, false);
 	}
 
 	public String getGroupTapeReadBuffer() {
 
-		if (!cr.getConfiguration().containsKey(GROUP_TAPE_READ_BUFFER_KEY)) {
-			// return default
-			return "storm-SA-read";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(GROUP_TAPE_READ_BUFFER_KEY);
-		}
+		return cr.getConfiguration().getString(GROUP_TAPE_READ_BUFFER_KEY, "storm-SA-read");
 	}
 
 	public String getGroupTapeWriteBuffer() {
 
-		if (!cr.getConfiguration().containsKey(GROUP_TAPE_WRITE_BUFFER_KEY)) {
-			// return default
-			return "storm-SA-write";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(GROUP_TAPE_WRITE_BUFFER_KEY);
-		}
+		return cr.getConfiguration().getString(GROUP_TAPE_WRITE_BUFFER_KEY, "storm-SA-write");
 	}
 
 	/**
@@ -2170,13 +1556,7 @@ public class Configuration {
 	 */
 	public String getGRIDHTTPSPluginClassName() {
 
-		if (!cr.getConfiguration().containsKey(GRIDHTTPS_PLUGIN_CLASSNAME_KEY)) {
-			// return default
-			return "it.grid.storm.https.HTTPSPluginInterfaceStub";
-		} else {
-			// load from external source
-			return cr.getConfiguration().getString(GRIDHTTPS_PLUGIN_CLASSNAME_KEY);
-		}
+		return cr.getConfiguration().getString(GRIDHTTPS_PLUGIN_CLASSNAME_KEY, "it.grid.storm.https.HTTPSPluginInterfaceStub");
 	}
 
 	/**
@@ -2184,14 +1564,7 @@ public class Configuration {
 	 */
 	public boolean getSynchronousQuotaCheckEnabled() {
 
-		if (!cr.getConfiguration().containsKey(SYNCHRONOUS_QUOTA_CHECK_ENABLED_KEY)) {
-			// return default
-			return false;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(
-				SYNCHRONOUS_QUOTA_CHECK_ENABLED_KEY);
-		}
+			return cr.getConfiguration().getBoolean(SYNCHRONOUS_QUOTA_CHECK_ENABLED_KEY, false);
 	}
 
 	/**
@@ -2200,14 +1573,7 @@ public class Configuration {
 	 */
 	public int getGPFSQuotaRefreshPeriod() {
 
-		// GPFS_QUOTA_REFRESH_PERIOD_KEY
-		if (!cr.getConfiguration().containsKey(GPFS_QUOTA_REFRESH_PERIOD_KEY)) {
-			// return default
-			return 900; // 15 minutes
-		} else {
-			// load from external source
-			return cr.getConfiguration().getInt(GPFS_QUOTA_REFRESH_PERIOD_KEY);
-		}
+		return cr.getConfiguration().getInt(GPFS_QUOTA_REFRESH_PERIOD_KEY, 900);
 	}
 
 	/**
@@ -2215,13 +1581,7 @@ public class Configuration {
 	 */
 	public boolean getFastBootstrapEnabled() {
 
-		if (!cr.getConfiguration().containsKey(FAST_BOOTSTRAP_ENABLED_KEY)) {
-			// return default
-			return true;
-		} else {
-			// load from external source
-			return cr.getConfiguration().getBoolean(FAST_BOOTSTRAP_ENABLED_KEY);
-		}
+		return cr.getConfiguration().getBoolean(FAST_BOOTSTRAP_ENABLED_KEY, true);
 	}
 
 	/**
@@ -2229,63 +1589,68 @@ public class Configuration {
 	 */
 	public Long getServerPoolStatusCheckTimeout() {
 
-		if (!cr.getConfiguration()
-			.containsKey(SERVER_POOL_STATUS_CHECK_TIMEOUT_KEY)) {
-			// return default
-			return new Long(20000); // 20 seconds
-		} else {
-			// load from external source
-			return new Long(cr.getConfiguration().getLong(
-				SERVER_POOL_STATUS_CHECK_TIMEOUT_KEY));
-		}
+			return new Long(cr.getConfiguration().getLong(SERVER_POOL_STATUS_CHECK_TIMEOUT_KEY, 20000));
 	}
 
 	public boolean getSanityCheckEnabled() {
 
-		if (!cr.getConfiguration().containsKey(SANITY_CHECK_ENABLED_KEY)) {
-			// return default
-			return true;
-		} else {
-			// load from external source
-			return new Boolean(cr.getConfiguration().getBoolean(
-				SANITY_CHECK_ENABLED_KEY));
-		}
+			return new Boolean(cr.getConfiguration().getBoolean(SANITY_CHECK_ENABLED_KEY, true));
 	}
 
+	public Boolean getXmlRpcTokenEnabled() {
+		
+		return cr.getConfiguration().getBoolean(XMLRPC_SECURITY_ENABLED_KEY, false);
+	}
+	
+	public String getXmlRpcToken() {
+		
+		return cr.getConfiguration().getString(XMLRPC_SECURITY_TOKEN_KEY);
+	}
+	
 	@Override
 	public String toString() {
 
 		StringBuilder configurationStringBuilder = new StringBuilder();
+		
 		try {
+			
 			// This class methods
 			Method methods[] = Configuration.instance.getClass().getDeclaredMethods();
 
 			// This class fields
+			
 			Field[] fields = Configuration.instance.getClass().getDeclaredFields();
+			
 			HashMap<String, String> methodKeyMap = new HashMap<String, String>();
+			
 			for (Field field : fields) {
+				
 				String fieldName = field.getName();
+				
 				if (fieldName.endsWith("KEY") && field.getType().equals(String.class)) {
+					
 					// from a field like GROUP_TAPE_WRITE_BUFFER_KEY =
 					// "tape.buffer.group.write"
 					// puts in the map the pair
 					// <getgrouptapewritebuffer,tape.buffer.group.write>
-					String mapKey = "get"
-						+ fieldName.substring(0, fieldName.lastIndexOf("_"))
-							.replaceAll("_", "").toLowerCase();
+					String mapKey = "get" + fieldName.substring(0, fieldName.lastIndexOf("_")).replaceAll("_", "").toLowerCase();
+					
 					if (methodKeyMap.containsKey(mapKey)) {
+					
 						String value = methodKeyMap.get(mapKey);
-						methodKeyMap.put(mapKey,
-							value + " , " + (String) field.get(Configuration.instance));
+						methodKeyMap.put(mapKey, value + " , " + (String) field.get(Configuration.instance));
+					
 					} else {
-						methodKeyMap
-							.put(mapKey, (String) field.get(Configuration.instance));
+						
+						methodKeyMap.put(mapKey, (String) field.get(Configuration.instance));
 					}
 				}
 			}
 
 			Object field = null;
+			
 			Object[] dummyArray = new Object[0];
+			
 			for (Method method : methods) {
 				/*
 				 * with method.getModifiers() == 1 we check that the method is public

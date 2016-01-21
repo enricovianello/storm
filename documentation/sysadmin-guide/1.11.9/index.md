@@ -2,6 +2,8 @@
 layout: toc
 title: StoRM Storage Resource Manager - System Administration Guide
 version: 1.11.9
+redirect_from:
+  - /documentation/sysadmin-guide/
 ---
 
 #StoRM System Administration Guide
@@ -789,7 +791,6 @@ This is called the **Detailed Monitoring Round**. After this, the Monitoring Sum
 
 **_Example_**:
 
-```
     03/20 14:19:11 : Last round details:
     03/20 14:19:11 : [PTP] [OK:3,F:0,E:0,Avg:0.203,Std Dev:0.026,m:0.183,M:0.240]
     03/20 14:19:11 : [Put done] [OK:2,F:0,E:0,Avg:0.155,Std Dev:0.018,m:0.136,M:0.173]
@@ -803,7 +804,6 @@ This is called the **Detailed Monitoring Round**. After this, the Monitoring Sum
     03/20 14:19:11 : [Put done] [OK:5,F:0,E:0,Avg:0.152,Std Dev:0.027,m:0.110,M:0.185]
     03/20 14:19:11 : [Release files] [OK:4,F:0,E:0,Avg:0.154,Std Dev:0.044,m:0.111,M:0.216]
     03/20 14:19:11 : [Rm] [OK:3,F:0,E:0,Avg:0.116,Std Dev:0.004,m:0.111,M:0.122]
-```
 
 **Note**:
 
@@ -816,10 +816,8 @@ This is called the **Detailed Monitoring Round**. After this, the Monitoring Sum
 If you have problem at gSOAP level, and you have already looked at the troubleshooting section of the StoRM site without finding a solution, and you are brave enough, you could try to find some useful information on the gSOAP log file.
 To enable gSOAP logging, set the following environment variables:
 
-```
     $CGSI_TRACE=1
     $CGSI_TRACEFILE=/tmp/tracefile
-```
 
 and restart the Frontend daemon by calling directly the init script */etc/init.d/storm-frontend-server* and see if the error messages contained in */tmp/tracefile* could help. Please be very careful, it prints really a huge amount of information.
 
